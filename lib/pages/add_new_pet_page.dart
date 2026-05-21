@@ -122,7 +122,7 @@ class _AddNewPetPageState extends State<AddNewPetPage> {
                                     maxLines: 2,
                                     softWrap: true,
                                     overflow: TextOverflow.visible,
-                x"x"                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.nunito(
                                       fontSize: 16 * scale,
                                       fontWeight: FontWeight.w400,
                                       color: Colors.black.withValues(alpha: 0.7),
