@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:pawiva/models/pet_profile.dart';
 import 'package:pawiva/models/timer_log.dart';
 import 'package:pawiva/services/notification_service.dart';
@@ -22,6 +23,7 @@ class _TimerPageState extends State<TimerPage> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
   final GlobalKey<StatisticsViewState> _statsKey = GlobalKey();
+  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
   // Timer and selection state moved here to ensure persistence across PageView swipes
   bool _isRunning = false;
@@ -80,6 +82,13 @@ class _TimerPageState extends State<TimerPage> {
     setState(() {
       _isRunning = true;
     });
+    _analytics.logEvent(
+      name: 'timer_start',
+      parameters: {
+        'activity': _selectedActivity ?? 'unknown',
+        'pet_count': _selectedPetIndices.length,
+      },
+    );
     NotificationService.onStopRequested = () {
       if (mounted) {
         _stopTimer();
@@ -95,6 +104,13 @@ class _TimerPageState extends State<TimerPage> {
 
   void _stopTimer() {
     _timer?.cancel();
+    _analytics.logEvent(
+      name: 'timer_stop',
+      parameters: {
+        'activity': _selectedActivity ?? 'unknown',
+        'duration_seconds': _seconds,
+      },
+    );
     NotificationService().stopActivityNotifications();
     if (_seconds > 0) {
       final String sessionId = DateTime.now().millisecondsSinceEpoch.toString();

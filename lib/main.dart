@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'splash_screen.dart';
 import 'package:pawiva/services/notification_service.dart';
@@ -7,6 +9,7 @@ import 'package:pawiva/l10n/locale_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   tz.initializeTimeZones();
   await NotificationService().initialize();
   await NotificationService().requestPermissions();
