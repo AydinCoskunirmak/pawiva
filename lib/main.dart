@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'splash_screen.dart';
 import 'package:pawiva/services/notification_service.dart';
