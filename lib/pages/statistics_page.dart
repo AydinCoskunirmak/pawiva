@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'dart:math' show pi, max, min;
 import 'dart:io';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,6 +28,7 @@ class StatisticsView extends StatefulWidget {
 }
 
 class StatisticsViewState extends State<StatisticsView> {
+  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
   final Set<int> _selectedPetIndices = {};
   String? _selectedActivity;
   String _timeRange = "daily"; // "daily" | "weekly" | "monthly"
@@ -279,6 +281,13 @@ class StatisticsViewState extends State<StatisticsView> {
     setState(() {
       _isSharePhotoMode = true;
     });
+    _analytics.logEvent(
+      name: 'share_mode_entered',
+      parameters: {
+        'activity': _selectedActivity ?? 'unknown',
+        'time_range': _timeRange,
+      },
+    );
   }
 
   void exitSharePhotoMode() {
@@ -439,6 +448,13 @@ class StatisticsViewState extends State<StatisticsView> {
             _currentMonthOffset = 0;
             _touchedBarIndex = null;
             _scrollToToday();
+            _analytics.logEvent(
+              name: 'activity_viewed',
+              parameters: {
+                'activity': activityKey,
+                'time_range': _timeRange,
+              },
+            );
           }
         });
         widget.onActivitySelected(_selectedActivity != null);
