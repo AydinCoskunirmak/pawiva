@@ -4,12 +4,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:pawiva/l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:video_player/video_player.dart';
 import 'package:file_picker/file_picker.dart';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
 
 class SharePhotoPage extends StatefulWidget {
   final List<String> petNames;
@@ -40,7 +41,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
   File? _selectedVideo;
   VideoPlayerController? _videoController;
   bool _isCapturing = false;
-  final ScreenshotController _screenshotController = ScreenshotController();
+  final GlobalKey _repaintKey = GlobalKey();
 
   @override
   void initState() {
@@ -148,8 +149,8 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
         SizedBox(height: 12 * scale),
         Expanded(
           child: Center(
-            child: Screenshot(
-              controller: _screenshotController,
+            child: RepaintBoundary(
+             key: _repaintKey,
               child: Container(
                 width: 323 * scale,
                 height: double.infinity,
@@ -422,24 +423,28 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
   Future<void> _sharePhoto() async {
     final l10n = AppLocalizations.of(context);
     setState(() => _isCapturing = true);
-    await Future.delayed(const Duration(milliseconds: 50));
-    final image = await _screenshotController.capture();
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    final boundary = _repaintKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    final image = await boundary.toImage(pixelRatio: 3.0);
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    final bytes = byteData!.buffer.asUint8List();
+
     setState(() => _isCapturing = false);
-    if (image != null) {
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/pawiva_share.png');
-      await file.writeAsBytes(image);
 
-      List<XFile> files = [XFile(file.path)];
-      if (_selectedVideo != null) {
-        files.add(XFile(_selectedVideo!.path));
-      }
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/pawiva_share.png');
+    await file.writeAsBytes(bytes);
 
-      await Share.shareXFiles(
-        files,
-        text: l10n.checkOutActivity,
-      );
+    List<XFile> files = [XFile(file.path)];
+    if (_selectedVideo != null) {
+      files.add(XFile(_selectedVideo!.path));
     }
+
+    await Share.shareXFiles(
+      files,
+      text: l10n.checkOutActivity,
+    );
   }
 
   String _formatTime(int totalSeconds, AppLocalizations l10n) {

@@ -23,7 +23,7 @@ class _TimerPageState extends State<TimerPage> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
   final GlobalKey<StatisticsViewState> _statsKey = GlobalKey();
-  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  FirebaseAnalytics? _analytics ;
 
   // Timer and selection state moved here to ensure persistence across PageView swipes
   bool _isRunning = false;
@@ -40,12 +40,20 @@ class _TimerPageState extends State<TimerPage> {
   void initState() {
     super.initState();
     _loadLogs();
-    _initNotifications();
+    try {
+      _analytics = FirebaseAnalytics.instance;
+    } catch (e) {
+      debugPrint('Analytics error: $e');
+    }
   }
 
   Future<void> _initNotifications() async {
-    await NotificationService().initialize();
-    await NotificationService().requestPermissions();
+    try {
+      await NotificationService().initialize();
+      await NotificationService().requestPermissions();
+    } catch (e) {
+      debugPrint('Notification error: $e');
+    }
   }
 
   Future<void> _loadLogs() async {
@@ -79,10 +87,11 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   void _startTimer() {
+    _initNotifications();
     setState(() {
       _isRunning = true;
     });
-    _analytics.logEvent(
+    _analytics?.logEvent(
       name: 'timer_start',
       parameters: {
         'activity': _selectedActivity ?? 'unknown',
@@ -95,16 +104,17 @@ class _TimerPageState extends State<TimerPage> {
       }
     };
     NotificationService().startActivityNotifications(_selectedActivity!);
+    final startTime = DateTime.now().subtract(Duration(seconds: _seconds));
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
-        _seconds++;
+        _seconds = DateTime.now().difference(startTime).inSeconds;
       });
     });
   }
 
   void _stopTimer() {
     _timer?.cancel();
-    _analytics.logEvent(
+    _analytics?.logEvent(
       name: 'timer_stop',
       parameters: {
         'activity': _selectedActivity ?? 'unknown',
@@ -167,11 +177,7 @@ class _TimerPageState extends State<TimerPage> {
             absorbing: _isEditMenuOpen,
             child: Stack(
               children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
+                Positioned.fill(
                   child: SafeArea(
                     bottom: false,
                     child: Padding(
@@ -346,6 +352,7 @@ class _TimerPageState extends State<TimerPage> {
               ],
             ),
           ),
+          if (_isEditMenuOpen)
           EditMenuOverlay(
             isOpen: _isEditMenuOpen,
             onClose: () => setState(() => _isEditMenuOpen = false),

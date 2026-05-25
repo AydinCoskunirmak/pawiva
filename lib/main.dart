@@ -8,10 +8,12 @@ import 'package:pawiva/l10n/locale_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('Firebase error: $e');
+  };
   tz.initializeTimeZones();
-  await NotificationService().initialize();
-  await NotificationService().requestPermissions();
   runApp(const PawivaApp());
 }
 

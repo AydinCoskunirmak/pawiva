@@ -18,6 +18,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
   late List<VideoPlayerController> _videoControllers;
+  final Set<int> _playedOnce = {};
 
   final List<String> _videoAssets = [
     'assets/onboarding/video1.MOV',
@@ -29,17 +30,34 @@ class _OnboardingPageState extends State<OnboardingPage> {
   void initState() {
     super.initState();
     _videoControllers = _videoAssets.map((asset) {
-      final controller = VideoPlayerController.asset(asset);
-      controller.initialize().then((_) {
-        controller.setLooping(true);
-        controller.setVolume(0);
-        if (_videoAssets.indexOf(asset) == 0) {
-          controller.play();
-        }
+      return VideoPlayerController.asset(asset);
+    }).toList();
+    _initializeVideo(0);
+  }
+
+  Future<void> _initializeVideo(int index) async {
+    if (_videoControllers[index].value.isInitialized) {
+      await _videoControllers[index].seekTo(Duration.zero);
+      await _videoControllers[index].play();
+      return;
+    }
+    await _videoControllers[index].initialize();
+    _videoControllers[index].setLooping(false);
+    _videoControllers[index].setVolume(0);
+    await _videoControllers[index].seekTo(Duration.zero);
+    await Future.delayed(const Duration(milliseconds: 300));
+    await _videoControllers[index].play();
+    _playedOnce.add(index);
+    setState(() {});
+
+    // Sonraki videoyu arkaplanda hazırla
+    if (index + 1 < _videoControllers.length) {
+      _videoControllers[index + 1].initialize().then((_) {
+        _videoControllers[index + 1].setLooping(false);
+        _videoControllers[index + 1].setVolume(0);
         setState(() {});
       });
-      return controller;
-    }).toList();
+    }
   }
 
   @override
@@ -55,14 +73,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
     setState(() {
       _currentIndex = index;
     });
+
     for (int i = 0; i < _videoControllers.length; i++) {
-      if (i == index) {
-        _videoControllers[i].play();
-      } else {
+      if (i != index) {
         _videoControllers[i].pause();
-        _videoControllers[i].seekTo(Duration.zero);
       }
     }
+
+    _initializeVideo(index);
   }
 
   Future<void> _completeOnboarding() async {
@@ -77,7 +95,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       final List<PetProfile> profiles = decoded
           .map((item) => PetProfile.fromJson(item as Map<String, dynamic>))
           .toList();
-      
+
       if (profiles.isNotEmpty && mounted) {
         Navigator.pushReplacement(
           context,
@@ -104,10 +122,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final double scale = (scaleW + scaleH) / 2;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Full screen video
           SizedBox.expand(
             child: PageView.builder(
               controller: _pageController,
@@ -127,12 +144,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     ),
                   );
                 } else {
-                  return const Center(child: CircularProgressIndicator());
+                  return Container(color: Colors.black);
                 }
               },
             ),
           ),
-          // Skip button top right
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
             right: 20 * scale,
@@ -148,7 +164,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
             ),
           ),
-          // Dots bottom center
           Positioned(
             bottom: 120 * scaleH,
             left: 0,
@@ -158,7 +173,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
               children: List.generate(3, (index) => _buildDot(index, scale)),
             ),
           ),
-          // Next or GetStarted button
           Positioned(
             bottom: 50 * scaleH,
             left: 0,
@@ -183,7 +197,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       height: 8 * scale,
       decoration: BoxDecoration(
         color: isActive ? const Color(0xFFFF8146) : Colors.grey,
-        borderRadius: BorderRadius.circular(isActive ? 4 * scale : 4 * scale),
+        borderRadius: BorderRadius.circular(4 * scale),
       ),
     );
   }
