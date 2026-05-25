@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Pawiva needs access to save photos.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -37,13 +39,19 @@
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Pawiva needs access to save photos.</string>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 		<key>UISceneConfigurations</key>
 		<dict>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Pawiva needs access to save photos.</string>
 			<key>UIWindowSceneSessionRoleApplication</key>
 			<array>
 				<dict>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Pawiva needs access to save photos.</string>
 					<key>UISceneClassName</key>
 					<string>UIWindowScene</string>
 					<key>UISceneConfigurationName</key>

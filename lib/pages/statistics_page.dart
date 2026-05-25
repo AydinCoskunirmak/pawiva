@@ -9,6 +9,8 @@ import 'package:pawiva/models/timer_log.dart';
 import 'package:pawiva/models/pet_profile.dart';
 import 'package:pawiva/pages/share_photo_page.dart';
 import 'package:pawiva/l10n/app_localizations.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/cupertino.dart';
 
 class StatisticsView extends StatefulWidget {
   final List<TimerLog> logs;
@@ -289,62 +291,104 @@ class StatisticsViewState extends State<StatisticsView> {
 
   Future<void> _pickImageAndNavigate() async {
     final l10n = AppLocalizations.of(context);
+
+    showCupertinoModalPopup(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _pickPhotoAndNavigate();
+            },
+            child: const Text("Photo"),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              _pickVideoAndNavigate();
+            },
+            child: const Text("Video"),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickPhotoAndNavigate() async {
+    final l10n = AppLocalizations.of(context);
     final picker = ImagePicker();
     final image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      if (_selectedActivity == null || _selectedPetIndices.isEmpty) return;
-
-      final filteredLogs = _getFilteredLogs();
-      final groupedData = _groupLogs(filteredLogs);
-
-      int totalBars;
-      if (_timeRange == "daily") {
-        totalBars = 24;
-      } else if (_timeRange == "weekly") {
-        totalBars = _getWeeklyWindow().days;
-      } else {
-        totalBars = _getMonthlyWindow().days;
-      }
-
-      final totalSeconds =
-          filteredLogs.fold<int>(0, (sum, log) => sum + log.durationSeconds);
-      final selectedPetNames =
-          _selectedPetIndices.map((i) => widget.profiles[i].name).toList();
-
-      if (!mounted) return;
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) {
-            String translatedActivity;
-            if (_selectedActivity == "walk with paws") {
-              translatedActivity = l10n.walkWithPaws;
-            } else if (_selectedActivity == "cuddle and love") {
-              translatedActivity = l10n.cuddleAndLove;
-            } else if (_selectedActivity == "playtime for paws") {
-              translatedActivity = l10n.playtimeForPaws;
-            } else if (_selectedActivity == "snuggle nap") {
-              translatedActivity = l10n.snuggleNap;
-            } else {
-              translatedActivity = l10n.allActivities;
-            }
-
-            return SharePhotoPage(
-              petNames: selectedPetNames,
-              activity: translatedActivity,
-              timeRange: _timeRange,
-              totalSeconds: totalSeconds,
-              chartData: groupedData,
-              totalChartBars: totalBars,
-              initialPhoto: File(image.path),
-            );
-          },
-        ),
-      );
+      _navigateToSharePage(l10n, photo: File(image.path));
     }
   }
 
+  Future<void> _pickVideoAndNavigate() async {
+    final l10n = AppLocalizations.of(context);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.video,
+      allowMultiple: false,
+    );
+    if (result != null && result.files.single.path != null) {
+      _navigateToSharePage(l10n, video: File(result.files.single.path!));
+    }
+  }
+
+  void _navigateToSharePage(AppLocalizations l10n, {File? photo, File? video}) {
+    if (_selectedActivity == null || _selectedPetIndices.isEmpty) return;
+
+    final filteredLogs = _getFilteredLogs();
+    final groupedData = _groupLogs(filteredLogs);
+
+    int totalBars;
+    if (_timeRange == "daily") {
+      totalBars = 24;
+    } else if (_timeRange == "weekly") {
+      totalBars = _getWeeklyWindow().days;
+    } else {
+      totalBars = _getMonthlyWindow().days;
+    }
+
+    final totalSeconds = filteredLogs.fold<int>(0, (sum, log) => sum + log.durationSeconds);
+    final selectedPetNames = _selectedPetIndices.map((i) => widget.profiles[i].name).toList();
+
+    if (!mounted) return;
+
+    String translatedActivity;
+    if (_selectedActivity == "walk with paws") {
+      translatedActivity = l10n.walkWithPaws;
+    } else if (_selectedActivity == "cuddle and love") {
+      translatedActivity = l10n.cuddleAndLove;
+    } else if (_selectedActivity == "playtime for paws") {
+      translatedActivity = l10n.playtimeForPaws;
+    } else if (_selectedActivity == "snuggle nap") {
+      translatedActivity = l10n.snuggleNap;
+    } else {
+      translatedActivity = l10n.allActivities;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SharePhotoPage(
+          petNames: selectedPetNames,
+          activity: translatedActivity,
+          timeRange: _timeRange,
+          totalSeconds: totalSeconds,
+          chartData: groupedData,
+          totalChartBars: totalBars,
+          initialPhoto: photo ?? File(''),
+          initialVideo: video,
+        ),
+      ),
+    );
+  }
   void navigateToSharePhoto() {
     enterSharePhotoMode();
   }

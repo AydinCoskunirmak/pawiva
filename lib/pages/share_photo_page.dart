@@ -19,7 +19,8 @@ class SharePhotoPage extends StatefulWidget {
   final int totalSeconds;
   final Map<int, double> chartData;
   final int totalChartBars;
-  final File initialPhoto;
+  final File? initialPhoto;
+  final File? initialVideo;
 
   const SharePhotoPage({
     super.key,
@@ -29,7 +30,8 @@ class SharePhotoPage extends StatefulWidget {
     required this.totalSeconds,
     required this.chartData,
     required this.totalChartBars,
-    required this.initialPhoto,
+    this.initialPhoto,
+    this.initialVideo,
   });
 
   @override
@@ -46,7 +48,21 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
   @override
   void initState() {
     super.initState();
-    _selectedPhoto = widget.initialPhoto;
+    _selectedPhoto = widget.initialPhoto ?? File('');
+    if (widget.initialVideo != null) {
+      _initVideo(widget.initialVideo!);
+    }
+  }
+
+  Future<void> _initVideo(File videoFile) async {
+    final controller = VideoPlayerController.file(videoFile);
+    await controller.initialize();
+    controller.setLooping(true);
+    controller.play();
+    setState(() {
+      _selectedVideo = videoFile;
+      _videoController = controller;
+    });
   }
 
   @override
@@ -188,7 +204,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
                                   fit: BoxFit.cover,
                                 ),
                           Positioned(
-                            top: frameHeight * 0.047,
+                            top: frameHeight * 0.12,
                             left: 0,
                             right: 0,
                             child: Center(
@@ -200,7 +216,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
                             ),
                           ),
                           Positioned(
-                            top: frameHeight * 0.091,
+                            top: frameHeight * 0.17,
                             left: 0,
                             right: 0,
                             child: Center(
@@ -212,7 +228,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
                             ),
                           ),
                           Positioned(
-                            top: frameHeight * 0.707,
+                            top: frameHeight * 0.62,
                             left: 0,
                             right: 0,
                             child: Center(
@@ -224,7 +240,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
                             ),
                           ),
                           Positioned(
-                            top: frameHeight * 0.751,
+                            top: frameHeight * 0.66,
                             left: 0,
                             right: 0,
                             child: Center(
@@ -236,7 +252,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
                             ),
                           ),
                           Positioned(
-                            top: frameHeight * 0.795,
+                            top: frameHeight * 0.70,
                             left: 0,
                             right: 0,
                             child: Center(
@@ -257,7 +273,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
                             ),
                           ),
                           Positioned(
-                            top: frameHeight * 0.958,
+                            top: frameHeight * 0.87,
                             left: 0,
                             right: 0,
                             child: Center(
@@ -422,29 +438,48 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
   }
   Future<void> _sharePhoto() async {
     final l10n = AppLocalizations.of(context);
-    setState(() => _isCapturing = true);
-    await Future.delayed(const Duration(milliseconds: 100));
+    try {
+      setState(() => _isCapturing = true);
+      await Future.delayed(const Duration(milliseconds: 300));
 
-    final boundary = _repaintKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-    final image = await boundary.toImage(pixelRatio: 3.0);
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    final bytes = byteData!.buffer.asUint8List();
+      final boundary = _repaintKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) {
+        debugPrint('RepaintBoundary not found');
+        setState(() => _isCapturing = false);
+        return;
+      }
 
-    setState(() => _isCapturing = false);
+      final double targetWidth = 1080;
+      final double currentWidth = boundary.size.width;
+      final double pixelRatio = targetWidth / currentWidth;
+      final image = await boundary.toImage(pixelRatio: pixelRatio);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final bytes = byteData!.buffer.asUint8List();
 
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/pawiva_share.png');
-    await file.writeAsBytes(bytes);
+      setState(() => _isCapturing = false);
 
-    List<XFile> files = [XFile(file.path)];
-    if (_selectedVideo != null) {
-      files.add(XFile(_selectedVideo!.path));
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/pawiva_share.png');
+      await file.writeAsBytes(bytes);
+
+      List<XFile> files = [XFile(file.path)];
+      if (_selectedVideo != null) {
+        files.add(XFile(_selectedVideo!.path));
+      }
+
+      await Share.shareXFiles(
+        files,
+        text: l10n.checkOutActivity,
+        sharePositionOrigin: Rect.fromCenter(
+          center: MediaQuery.of(context).size.center(Offset.zero),
+          width: 200,
+          height: 200,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Share error: $e');
+      setState(() => _isCapturing = false);
     }
-
-    await Share.shareXFiles(
-      files,
-      text: l10n.checkOutActivity,
-    );
   }
 
   String _formatTime(int totalSeconds, AppLocalizations l10n) {

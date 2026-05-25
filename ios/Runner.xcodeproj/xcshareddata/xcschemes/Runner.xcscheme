@@ -10,7 +10,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Prepare Flutter Framework Script"
-               scriptText = "/bin/sh &quot;/opt/homebrew/share/flutter/packages/flutter_tools/bin/xcode_backend.sh&quot; prepare&#10;">
+               scriptText = "/bin/sh &quot;/Users/aydincoskunirmak/flutter/packages/flutter_tools/bin/xcode_backend.sh&quot; prepare&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
