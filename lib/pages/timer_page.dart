@@ -11,6 +11,7 @@ import 'package:pawiva/l10n/app_localizations.dart';
 import 'statistics_page.dart';
 import 'edit_menu.dart';
 
+
 class TimerPage extends StatefulWidget {
   final List<PetProfile> profiles;
   const TimerPage({super.key, required this.profiles});
@@ -19,16 +20,16 @@ class TimerPage extends StatefulWidget {
   State<TimerPage> createState() => _TimerPageState();
 }
 
-class _TimerPageState extends State<TimerPage> {
+class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
   final GlobalKey<StatisticsViewState> _statsKey = GlobalKey();
-  FirebaseAnalytics? _analytics ;
+  FirebaseAnalytics? _analytics;
 
-  // Timer and selection state moved here to ensure persistence across PageView swipes
   bool _isRunning = false;
   int _seconds = 0;
   Timer? _timer;
+  DateTime? _startTime;
   final Set<int> _selectedPetIndices = {};
   String? _selectedActivity;
   List<TimerLog> _timerLogs = [];
@@ -39,11 +40,49 @@ class _TimerPageState extends State<TimerPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadLogs();
+    _resumeTimerIfNeeded();
     try {
       _analytics = FirebaseAnalytics.instance;
     } catch (e) {
       debugPrint('Analytics error: $e');
+    }
+  }
+
+  Future<void> _resumeTimerIfNeeded() async {
+    final prefs = await SharedPreferences.getInstance();
+    final startTimeStr = prefs.getString('timer_start_time');
+    final activity = prefs.getString('timer_activity');
+    final indicesStr = prefs.getString('timer_pet_indices');
+
+    if (startTimeStr != null && activity != null && activity.isNotEmpty) {
+      final startTime = DateTime.parse(startTimeStr);
+      final elapsed = DateTime.now().difference(startTime).inSeconds;
+      final indices = List<int>.from(jsonDecode(indicesStr ?? '[]'));
+
+      // Timer was running when app was closed - save the log and clear
+      if (elapsed > 0) {
+        final String sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+        final List<String> petNames = indices
+            .where((i) => i < widget.profiles.length)
+            .map((i) => widget.profiles[i].name)
+            .toList();
+
+        final log = TimerLog(
+          sessionId: sessionId,
+          petNames: petNames,
+          activity: activity,
+          durationSeconds: elapsed,
+          startTime: startTime,
+        );
+        await _saveLog(log);
+      }
+
+      // Clear saved timer state
+      await prefs.remove('timer_start_time');
+      await prefs.remove('timer_activity');
+      await prefs.remove('timer_pet_indices');
     }
   }
 
@@ -104,10 +143,18 @@ class _TimerPageState extends State<TimerPage> {
       }
     };
     NotificationService().startActivityNotifications(_selectedActivity!);
-    final startTime = DateTime.now().subtract(Duration(seconds: _seconds));
+    _startTime = DateTime.now().subtract(Duration(seconds: _seconds));
+
+    // Save timer state to SharedPreferences
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('timer_start_time', _startTime!.toIso8601String());
+      prefs.setString('timer_activity', _selectedActivity ?? '');
+      prefs.setString('timer_pet_indices', jsonEncode(_selectedPetIndices.toList()));
+    });
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
-        _seconds = DateTime.now().difference(startTime).inSeconds;
+        _seconds = DateTime.now().difference(_startTime!).inSeconds;
       });
     });
   }
@@ -133,13 +180,22 @@ class _TimerPageState extends State<TimerPage> {
         petNames: selectedPetNames,
         activity: _selectedActivity ?? "unknown",
         durationSeconds: _seconds,
-        startTime: DateTime.now().subtract(Duration(seconds: _seconds)),
+        startTime: _startTime ?? DateTime.now().subtract(Duration(seconds: _seconds)),
       );
       _saveLog(log);
     }
+
+    // Clear timer state from SharedPreferences
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.remove('timer_start_time');
+      prefs.remove('timer_activity');
+      prefs.remove('timer_pet_indices');
+    });
+
     setState(() {
       _isRunning = false;
       _seconds = 0;
+      _startTime = null;
     });
   }
 
@@ -150,7 +206,20 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      if (_isRunning) {
+        _stopTimer();
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    if (_isRunning) {
+      _stopTimer();
+    }
     _timer?.cancel();
     _pageController.dispose();
     super.dispose();
@@ -184,34 +253,34 @@ class _TimerPageState extends State<TimerPage> {
                       padding: EdgeInsets.only(bottom: 63 * scaleH),
                       child: Column(
                         children: [
-                        // Header
-                        Stack(
-                          children: [
-                            Container(
-                              height: 93 * scaleH,
-                              color: Colors.white,
-                              padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  _buildHeaderButton(l10n.timer, 0, scale),
-                                  Container(
-                                    width: 1,
-                                    height: 19 * scale,
-                                    color: const Color(0xFFFF8146),
-                                  ),
-                                  _buildHeaderButton(l10n.statistics, 1, scale),
-                                ],
-                              ),
-                            ),
-                            if (_isSharePhotoMode)
-                              Positioned.fill(
-                                child: Container(
-                                  color: Colors.white.withValues(alpha: 0.8),
+                          // Header
+                          Stack(
+                            children: [
+                              Container(
+                                height: 93 * scaleH,
+                                color: Colors.white,
+                                padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    _buildHeaderButton(l10n.timer, 0, scale),
+                                    Container(
+                                      width: 1,
+                                      height: 19 * scale,
+                                      color: const Color(0xFFFF8146),
+                                    ),
+                                    _buildHeaderButton(l10n.statistics, 1, scale),
+                                  ],
                                 ),
                               ),
-                          ],
-                        ),
+                              if (_isSharePhotoMode)
+                                Positioned.fill(
+                                  child: Container(
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                  ),
+                                ),
+                            ],
+                          ),
                           // Middle Area (PageView)
                           Expanded(
                             child: PageView(
@@ -353,17 +422,17 @@ class _TimerPageState extends State<TimerPage> {
             ),
           ),
           if (_isEditMenuOpen)
-          EditMenuOverlay(
-            isOpen: _isEditMenuOpen,
-            onClose: () => setState(() => _isEditMenuOpen = false),
-            profiles: widget.profiles,
-            onProfilesChanged: (updated) {
-              setState(() {
-                widget.profiles.clear();
-                widget.profiles.addAll(updated);
-              });
-            },
-          ),
+            EditMenuOverlay(
+              isOpen: _isEditMenuOpen,
+              onClose: () => setState(() => _isEditMenuOpen = false),
+              profiles: widget.profiles,
+              onProfilesChanged: (updated) {
+                setState(() {
+                  widget.profiles.clear();
+                  widget.profiles.addAll(updated);
+                });
+              },
+            ),
         ],
       ),
     );
@@ -453,7 +522,6 @@ class TimerView extends StatelessWidget {
       color: Colors.white,
       child: Column(
         children: [
-          // Choose your pet banner
           Container(
             width: double.infinity,
             height: 50 * scale,
@@ -473,7 +541,6 @@ class TimerView extends StatelessWidget {
             ),
           ),
           SizedBox(height: 10 * scaleH),
-          // Pet Profile Row
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -502,8 +569,8 @@ class TimerView extends StatelessWidget {
                               child: pet.image != null
                                   ? Image.file(pet.image!, fit: BoxFit.cover)
                                   : Center(
-                                      child: Icon(Icons.pets, size: 24 * scale),
-                                    ),
+                                child: Icon(Icons.pets, size: 24 * scale),
+                              ),
                             ),
                           ),
                           SizedBox(height: 4 * scale),
@@ -524,7 +591,6 @@ class TimerView extends StatelessWidget {
             ),
           ),
           SizedBox(height: 10 * scaleH),
-          // Pick activity banner
           Container(
             width: double.infinity,
             height: 50 * scale,
@@ -547,7 +613,6 @@ class TimerView extends StatelessWidget {
             ),
           ),
           SizedBox(height: 10 * scaleH),
-          // Activity Buttons
           ...localizedActivities.asMap().entries.map((entry) {
             int idx = entry.key;
             String activityLabel = entry.value;
@@ -588,7 +653,6 @@ class TimerView extends StatelessWidget {
             );
           }),
           const Spacer(),
-          // Timer Display
           Text(
             displayTime,
             style: GoogleFonts.nunito(
@@ -597,7 +661,6 @@ class TimerView extends StatelessWidget {
               color: Colors.black,
             ),
           ),
-          // Start/Stop Button
           GestureDetector(
             onTap: onToggleTimer,
             child: Text(

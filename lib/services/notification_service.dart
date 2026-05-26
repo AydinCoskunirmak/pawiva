@@ -271,9 +271,16 @@ class NotificationService {
         importance: Importance.max,
         priority: Priority.max,
       );
-    
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
     const NotificationDetails details = NotificationDetails(
       android: androidDetails,
+      iOS: iosDetails,
     );
 
     if (reminder.weekdays.isNotEmpty) {

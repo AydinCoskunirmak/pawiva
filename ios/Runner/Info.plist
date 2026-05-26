@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pawiva needs access to your photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Pawiva needs access to save photos.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
@@ -36,20 +38,27 @@
 	<array>
 		<string>fetch</string>
 		<string>remote-notification</string>
+<string>background-processing</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pawiva needs access to your photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Pawiva needs access to save photos.</string>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 		<key>UISceneConfigurations</key>
 		<dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pawiva needs access to your photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Pawiva needs access to save photos.</string>
 			<key>UIWindowSceneSessionRoleApplication</key>
 			<array>
 				<dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pawiva needs access to your photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Pawiva needs access to save photos.</string>
 					<key>UISceneClassName</key>

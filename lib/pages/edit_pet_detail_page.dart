@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pawiva/models/pet_profile.dart';
 import '../l10n/app_localizations.dart';
+import 'package:path_provider/path_provider.dart';
 
 class EditPetDetailPage extends StatefulWidget {
   final PetProfile profile;
@@ -73,8 +74,11 @@ class _EditPetDetailPageState extends State<EditPetDetailPage> {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final savedImage = await File(image.path).copy('${directory.path}/$fileName');
       setState(() {
-        _selectedImage = File(image.path);
+        _selectedImage = savedImage;
       });
       _checkForChanges();
     }
@@ -113,6 +117,7 @@ class _EditPetDetailPageState extends State<EditPetDetailPage> {
     final double scale = (scaleW + scaleH) / 2;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       body: Stack(
         children: [
@@ -141,9 +146,11 @@ class _EditPetDetailPageState extends State<EditPetDetailPage> {
                       ),
                     ),
                     Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 80 * scaleH),
                           GestureDetector(
                             onTap: _pickImage,
                             child: Stack(
@@ -222,6 +229,7 @@ class _EditPetDetailPageState extends State<EditPetDetailPage> {
                         ],
                       ),
                     ),
+                    )
                   ],
                 ),
               ),

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../l10n/app_localizations.dart';
 import '../models/pet_profile.dart';
 import 'timer_page.dart';
+import 'package:path_provider/path_provider.dart';
 
 class AddPetPage extends StatefulWidget {
   const AddPetPage({super.key});
@@ -73,11 +74,14 @@ class _AddPetPageState extends State<AddPetPage> {
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final savedImage = await File(image.path).copy('${directory.path}/$fileName');
       setState(() {
-        _selectedImage = File(image.path);
+        _selectedImage = savedImage;
       });
     }
   }
@@ -113,7 +117,7 @@ class _AddPetPageState extends State<AddPetPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       extendBody: false,
       extendBodyBehindAppBar: false,
       body: Stack(
@@ -130,8 +134,8 @@ class _AddPetPageState extends State<AddPetPage> {
                 child: GestureDetector(
                   onTap: () => FocusScope.of(context).unfocus(),
                   behavior: HitTestBehavior.translucent,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SizedBox(height: 63 * scaleH),
                       // Title
@@ -239,7 +243,6 @@ class _AddPetPageState extends State<AddPetPage> {
                       SizedBox(height: 30 * scaleH),
                       // Pet Type Buttons
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _buildTypeButton('cat', l10n.cat, scale),
                           SizedBox(width: 30 * scale),
@@ -299,7 +302,6 @@ class _AddPetPageState extends State<AddPetPage> {
                                         child: ConstrainedBox(
                                           constraints: BoxConstraints(minWidth: screenWidth - 40 * scaleW),
                                           child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
                                             children: profiles.asMap().entries.map((entry) {
                                               return Padding(
                                                 padding: EdgeInsets.only(right: entry.key == profiles.length - 1 ? 0 : 30 * scale),

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pawiva/models/pet_profile.dart';
 import '../l10n/app_localizations.dart';
+import 'package:path_provider/path_provider.dart';
 
 class AddNewPetPage extends StatefulWidget {
   final Function(PetProfile) onAdd;
@@ -44,8 +45,11 @@ class _AddNewPetPageState extends State<AddNewPetPage> {
     final picker = ImagePicker();
     final image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final savedImage = await File(image.path).copy('${directory.path}/$fileName');
       setState(() {
-        _selectedImage = File(image.path);
+        _selectedImage = savedImage;
       });
     }
   }
@@ -60,6 +64,7 @@ class _AddNewPetPageState extends State<AddNewPetPage> {
     bool isFormValid = _nameController.text.isNotEmpty && _selectedPetType != null;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       body: Stack(
         children: [
@@ -90,15 +95,17 @@ class _AddNewPetPageState extends State<AddNewPetPage> {
                           ),
                         ),
                       ),
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            GestureDetector(
-                              onTap: _pickImage,
-                              child: Container(
-                                width: 140 * scale,
-                                height: 149 * scale,
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(height: 80 * scaleH),
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: Container(
+                            width: 140 * scale,
+                            height: 149 * scale,
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(40 * scale),

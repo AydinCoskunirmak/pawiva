@@ -15,6 +15,11 @@ void main() async {
   };
   tz.initializeTimeZones();
   runApp(const PawivaApp());
+  try {
+    await NotificationService().initialize();
+  } catch (e) {
+    debugPrint('Notification init error: $e');
+  }
 }
 
 class PawivaApp extends StatefulWidget {
