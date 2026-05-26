@@ -293,6 +293,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
             ),
+            onChanged: (_) => setState(() {}),
             onSubmitted: (_) => FocusScope.of(context).unfocus(),
           ),
         );
@@ -334,6 +335,7 @@ class _AboutUsPageState extends State<AboutUsPage> {
               border: InputBorder.none,
               contentPadding: EdgeInsets.all(12 * scale),
             ),
+            onChanged: (_) => setState(() {}),
           ),
         );
       },

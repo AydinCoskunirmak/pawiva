@@ -11,7 +11,7 @@ class NotificationService {
   NotificationService._internal();
 
   final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
-  
+
   Timer? _notificationTimer;
   static VoidCallback? onStopRequested;
 
@@ -140,10 +140,10 @@ class NotificationService {
     } catch (e) {
       tz.setLocalLocation(tz.UTC);
     }
-    
+
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+
     const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -165,20 +165,20 @@ class NotificationService {
     await _notifications
         .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
-    
+
     final androidImplementation = _notifications
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    
+
     await androidImplementation?.requestNotificationsPermission();
     await androidImplementation?.requestExactAlarmsPermission();
   }
 
   void startActivityNotifications(String activity) {
     stopActivityNotifications();
-    
+
     int intervalMinutes;
     String body;
-    
+
     switch (activity) {
       case "walk with paws":
         intervalMinutes = 20;
@@ -199,11 +199,53 @@ class NotificationService {
       default:
         return;
     }
-    
+
+    // Schedule notifications in advance for iOS background support
+    _scheduleActivityNotifications(body, intervalMinutes);
+
+    // Timer.periodic for foreground (Android)
     _notificationTimer = Timer.periodic(
       Duration(minutes: intervalMinutes),
-      (timer) => _showActivityNotification(body),
+          (timer) => _showActivityNotification(body),
     );
+  }
+
+  Future<void> _scheduleActivityNotifications(String body, int intervalMinutes) async {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'pawiva_timer_channel',
+      'Pawiva Timer',
+      channelDescription: 'Timer activity notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    // Schedule 5 notifications in advance
+    for (int i = 1; i <= 5; i++) {
+      final scheduledTime = tz.TZDateTime.now(tz.local).add(
+        Duration(minutes: intervalMinutes * i),
+      );
+      await _notifications.zonedSchedule(
+        100 + i,
+        'Pawiva 🐾',
+        body,
+        scheduledTime,
+        details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+        UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
   }
 
   void stopActivityNotifications() {
@@ -226,11 +268,11 @@ class NotificationService {
       priority: Priority.high,
       largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
     );
-    
+
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       categoryIdentifier: 'pawiva_timer',
     );
-    
+
     const NotificationDetails details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
@@ -263,14 +305,14 @@ class NotificationService {
         body = "Time for activity with Paws!";
     }
 
-    const AndroidNotificationDetails androidDetails = 
-      AndroidNotificationDetails(
-        'pawiva_reminders_channel',
-        'Pawiva Reminders',
-        channelDescription: 'Scheduled reminders for activities',
-        importance: Importance.max,
-        priority: Priority.max,
-      );
+    const AndroidNotificationDetails androidDetails =
+    AndroidNotificationDetails(
+      'pawiva_reminders_channel',
+      'Pawiva Reminders',
+      channelDescription: 'Scheduled reminders for activities',
+      importance: Importance.max,
+      priority: Priority.max,
+    );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
