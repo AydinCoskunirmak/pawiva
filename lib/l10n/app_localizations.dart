@@ -78,6 +78,8 @@ class AppLocalizations {
   String get reminders => _t('reminders');
   String get minutes => _t('minutes');
   String get checkOutActivity => _t('check_out_activity');
+  String get photo => _t('photo');
+  String get video => _t('video');
   String get messageSent => _t('message sent');
   String get aboutUsText => _t('about_us_text');
   String get privacyText => _t('privacy_text');
@@ -121,8 +123,8 @@ class AppLocalizations {
   String get italian => _t('Italian');
 
   String _t(String key) {
-    return _translations[languageCode]?[key] ?? 
-           _translations['en']?[key] ?? key;
+    return _translations[languageCode]?[key] ??
+        _translations['en']?[key] ?? key;
   }
 
   static final Map<String, Map<String, String>> _translations = {
@@ -168,6 +170,8 @@ class AppLocalizations {
       'privacy': 'privacy',
       'SAVE CHANGES': 'SAVE CHANGES',
       'CANCEL': 'CANCEL',
+      'photo': 'Photo',
+      'video': 'Video',
       'DELETE': 'DELETE',
       'ADD': 'ADD',
       'add your pet': 'add your pet',
@@ -275,6 +279,8 @@ class AppLocalizations {
       'privacy': 'gizlilik politikası',
       'SAVE CHANGES': 'KAYDET',
       'CANCEL': 'İPTAL',
+      'photo': 'Fotoğraf',
+      'video': 'Video',
       'DELETE': 'SİL',
       'ADD': 'EKLE',
       'add your pet': 'patili dostunu ekle',
@@ -382,6 +388,8 @@ class AppLocalizations {
       'privacy': 'política de privacidad',
       'SAVE CHANGES': 'GUARDAR CAMBIOS',
       'CANCEL': 'CANCELAR',
+      'photo': 'Foto',
+      'video': 'Video',
       'DELETE': 'ELIMINAR',
       'ADD': 'AÑADIR',
       'add your pet': 'añade tu mascota',
@@ -488,6 +496,8 @@ class AppLocalizations {
       'SAVE CHANGES': 'SALVAR ALTERAÇÕES',
       'CANCEL': 'CANCELAR',
       'DELETE': 'EXCLUIR',
+      'photo': 'Foto',
+      'video': 'Vídeo',
       'ADD': 'ADICIONAR',
       'add your pet': 'adicione seu pet',
       'select pet': 'selecionar animal de estimação',
@@ -592,6 +602,8 @@ class AppLocalizations {
       'privacy': 'politique de confidentialité',
       'SAVE CHANGES': 'ENREGISTRER LES MODIFICATIONS',
       'CANCEL': 'ANNULER',
+      'photo': 'Photo',
+      'video': 'Vidéo',
       'DELETE': 'SUPPRIMER',
       'ADD': 'AJOUTER',
       'add your pet': 'ajoutez votre animal',
@@ -697,6 +709,8 @@ class AppLocalizations {
       'privacy': 'Datenschutzrichtlinie',
       'SAVE CHANGES': 'ÄNDERUNGEN SPEICHERN',
       'CANCEL': 'ABBRECHEN',
+      'photo': 'Foto',
+      'video': 'Video',
       'DELETE': 'LÖSCHEN',
       'ADD': 'HINZUFÜGEN',
       'add your pet': 'Fügen Sie Ihr Haustier hinzu',
@@ -802,6 +816,8 @@ class AppLocalizations {
       'privacy': '개인정보 처리방침',
       'SAVE CHANGES': '변경 사항 저장',
       'CANCEL': '취소',
+      'photo': '사진',
+      'video': '동영상',
       'DELETE': '삭제',
       'ADD': '추가',
       'add your pet': '반려동물 추가',
@@ -907,6 +923,8 @@ class AppLocalizations {
       'privacy': 'プライバシーポリシー',
       'SAVE CHANGES': '変更を保存',
       'CANCEL': 'キャンセル',
+      'photo': '写真',
+      'video': '動画',
       'DELETE': '削除',
       'ADD': '追加',
       'add your pet': 'ペットを追加',
@@ -1012,6 +1030,8 @@ class AppLocalizations {
       'privacy': 'Политика конфиденциальности',
       'SAVE CHANGES': 'СОХРАНИТЬ ИЗМЕНЕНИЯ',
       'CANCEL': 'ОТМЕНА',
+      'photo': 'Фото',
+      'video': 'Видео',
       'DELETE': 'УДАЛИТЬ',
       'ADD': 'ДОБАВИТЬ',
       'add your pet': 'Добавить питомца',
@@ -1117,6 +1137,8 @@ class AppLocalizations {
       'privacy': '隐私政策',
       'SAVE CHANGES': '保存更改',
       'CANCEL': '取消',
+      'photo': '照片',
+      'video': '视频',
       'DELETE': '删除',
       'ADD': '添加',
       'add your pet': '添加你的宠物',
@@ -1224,6 +1246,8 @@ class AppLocalizations {
       'privacy': 'privacy',
       'SAVE CHANGES': 'SALVA MODIFICHE',
       'CANCEL': 'ANNULLA',
+      'photo': 'Foto',
+      'video': 'Video',
       'DELETE': 'ELIMINA',
       'ADD': 'AGGIUNGI',
       'add your pet': 'aggiungi il tuo pet',

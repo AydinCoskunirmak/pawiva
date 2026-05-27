@@ -8,7 +8,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:video_player/video_player.dart';
-import 'package:file_picker/file_picker.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 
@@ -112,7 +111,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
             bottom: 63 * scaleH,
             child: SafeArea(
               bottom: false,
-                child: _buildPreviewState(scale, l10n),
+              child: _buildPreviewState(scale, l10n),
             ),
           ),
           // Footer pinned to bottom
@@ -166,7 +165,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
         Expanded(
           child: Center(
             child: RepaintBoundary(
-             key: _repaintKey,
+              key: _repaintKey,
               child: Container(
                 width: 323 * scale,
                 height: double.infinity,
@@ -193,16 +192,16 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
                       return Stack(
                         children: [
                           _selectedVideo != null &&
-                                  _videoController != null &&
-                                  _videoController!.value.isInitialized &&
-                                  !_isCapturing
+                              _videoController != null &&
+                              _videoController!.value.isInitialized &&
+                              !_isCapturing
                               ? VideoPlayer(_videoController!)
                               : Image.file(
-                                  _selectedPhoto,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
+                            _selectedPhoto,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                           Positioned(
                             top: frameHeight * 0.12,
                             left: 0,
@@ -419,13 +418,11 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
   }
 
   Future<void> _pickVideo() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.video,
-      allowMultiple: false,
-    );
-    if (result != null && result.files.single.path != null) {
+    final picker = ImagePicker();
+    final video = await picker.pickVideo(source: ImageSource.gallery);
+    if (video != null) {
       _videoController?.dispose();
-      final videoFile = File(result.files.single.path!);
+      final videoFile = File(video.path);
       final controller = VideoPlayerController.file(videoFile);
       await controller.initialize();
       controller.setLooping(true);

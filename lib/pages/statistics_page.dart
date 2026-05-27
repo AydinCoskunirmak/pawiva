@@ -9,7 +9,6 @@ import 'package:pawiva/models/timer_log.dart';
 import 'package:pawiva/models/pet_profile.dart';
 import 'package:pawiva/pages/share_photo_page.dart';
 import 'package:pawiva/l10n/app_localizations.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 
 class StatisticsView extends StatefulWidget {
@@ -304,20 +303,20 @@ class StatisticsViewState extends State<StatisticsView> {
               Navigator.pop(context);
               _pickPhotoAndNavigate();
             },
-            child: const Text("Photo"),
+            child: Text(l10n.photo),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
               _pickVideoAndNavigate();
             },
-            child: const Text("Video"),
+            child: Text(l10n.video),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
           isDefaultAction: true,
           onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
+          child: Text(l10n.cancel),
         ),
       ),
     );
@@ -334,12 +333,10 @@ class StatisticsViewState extends State<StatisticsView> {
 
   Future<void> _pickVideoAndNavigate() async {
     final l10n = AppLocalizations.of(context);
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.video,
-      allowMultiple: false,
-    );
-    if (result != null && result.files.single.path != null) {
-      _navigateToSharePage(l10n, video: File(result.files.single.path!));
+    final picker = ImagePicker();
+    final video = await picker.pickVideo(source: ImageSource.gallery);
+    if (video != null) {
+      _navigateToSharePage(l10n, video: File(video.path));
     }
   }
 
@@ -904,12 +901,12 @@ class StatisticsViewState extends State<StatisticsView> {
                     borderRadius: BorderRadius.circular(16 * scale),
                     boxShadow: isSelected
                         ? [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            )
-                          ]
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      )
+                    ]
                         : null,
                   ),
                   alignment: Alignment.center,
@@ -937,7 +934,7 @@ class StatisticsViewState extends State<StatisticsView> {
 
   List<TimerLog> _getFilteredLogs() {
     Set<String> selectedNames =
-        _selectedPetIndices.map((i) => widget.profiles[i].name).toSet();
+    _selectedPetIndices.map((i) => widget.profiles[i].name).toSet();
 
     DateTime rangeStart, rangeEnd;
 

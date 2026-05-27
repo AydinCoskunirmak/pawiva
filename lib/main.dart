@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'splash_screen.dart';
 import 'package:pawiva/services/notification_service.dart';
@@ -13,6 +15,15 @@ void main() async {
   } catch (e) {
     debugPrint('Firebase error: $e');
   };
+  try {
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+  } catch (e) {
+    debugPrint('Crashlytics error: $e');
+  }
   tz.initializeTimeZones();
   runApp(const PawivaApp());
   try {
