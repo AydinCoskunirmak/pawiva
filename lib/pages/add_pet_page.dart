@@ -243,7 +243,8 @@ class _AddPetPageState extends State<AddPetPage> {
                       SizedBox(height: 30 * scaleH),
                       // Pet Type Buttons
                       Row(
-                        children: [
+                        mainAxisAlignment: MainAxisAlignment.center,
+                         children: [
                           _buildTypeButton('cat', l10n.cat, scale),
                           SizedBox(width: 30 * scale),
                           _buildTypeButton('dog', l10n.dog, scale),
@@ -302,6 +303,7 @@ class _AddPetPageState extends State<AddPetPage> {
                                         child: ConstrainedBox(
                                           constraints: BoxConstraints(minWidth: screenWidth - 40 * scaleW),
                                           child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
                                             children: profiles.asMap().entries.map((entry) {
                                               return Padding(
                                                 padding: EdgeInsets.only(right: entry.key == profiles.length - 1 ? 0 : 30 * scale),

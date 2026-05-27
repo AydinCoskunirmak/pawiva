@@ -251,7 +251,10 @@ class NotificationService {
   void stopActivityNotifications() {
     _notificationTimer?.cancel();
     _notificationTimer = null;
-    _notifications.cancelAll();
+    // Only cancel activity notifications (100-105)
+    for (int i = 100; i <= 105; i++) {
+      _notifications.cancel(i);
+    }
   }
 
   static void stopFromNotification() {
