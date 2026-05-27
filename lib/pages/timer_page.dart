@@ -41,6 +41,9 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (widget.profiles.length == 1) {
+      _selectedPetIndices.add(0);
+    }
     _loadLogs();
     _resumeTimerIfNeeded();
     try {
@@ -430,6 +433,12 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
                 setState(() {
                   widget.profiles.clear();
                   widget.profiles.addAll(updated);
+                  if (updated.length == 1) {
+                    _selectedPetIndices.clear();
+                    _selectedPetIndices.add(0);
+                  } else {
+                    _selectedPetIndices.clear();
+                  }
                 });
               },
             ),

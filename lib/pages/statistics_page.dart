@@ -55,6 +55,9 @@ class StatisticsViewState extends State<StatisticsView> {
     _initDates();
     _horizontalScrollController.addListener(_onScroll);
     _scrollToToday();
+    if (widget.profiles.length == 1) {
+      _selectedPetIndices.add(0);
+    }
   }
 
   void _onScroll() {
