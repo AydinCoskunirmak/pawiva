@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:pawiva/l10n/app_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -376,32 +375,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
   }
 
   void _showPickerOptions() {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _pickImage();
-            },
-            child: const Text("Photo"),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _pickVideo();
-            },
-            child: const Text("Video"),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDefaultAction: true,
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
-        ),
-      ),
-    );
+    _pickImage();
   }
 
   Future<void> _pickImage() async {
@@ -417,24 +391,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
     }
   }
 
-  Future<void> _pickVideo() async {
-    final picker = ImagePicker();
-    final video = await picker.pickVideo(source: ImageSource.gallery);
-    if (video != null) {
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.mp4';
-      final savedVideo = await File(video.path).copy('${directory.path}/$fileName');
-      _videoController?.dispose();
-      final controller = VideoPlayerController.file(savedVideo);
-      await controller.initialize();
-      controller.setLooping(true);
-      controller.play();
-      setState(() {
-        _selectedVideo = savedVideo;
-        _videoController = controller;
-      });
-    }
-  }
+
   Future<void> _sharePhoto() async {
     final l10n = AppLocalizations.of(context);
     try {

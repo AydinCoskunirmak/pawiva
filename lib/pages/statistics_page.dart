@@ -9,8 +9,6 @@ import 'package:pawiva/models/timer_log.dart';
 import 'package:pawiva/models/pet_profile.dart';
 import 'package:pawiva/pages/share_photo_page.dart';
 import 'package:pawiva/l10n/app_localizations.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:path_provider/path_provider.dart';
 
 class StatisticsView extends StatefulWidget {
   final List<TimerLog> logs;
@@ -294,53 +292,10 @@ class StatisticsViewState extends State<StatisticsView> {
 
   Future<void> _pickImageAndNavigate() async {
     final l10n = AppLocalizations.of(context);
-
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        actions: [
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _pickPhotoAndNavigate();
-            },
-            child: Text(l10n.photo),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-              _pickVideoAndNavigate();
-            },
-            child: Text(l10n.video),
-          ),
-        ],
-        cancelButton: CupertinoActionSheetAction(
-          isDefaultAction: true,
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.cancel),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _pickPhotoAndNavigate() async {
-    final l10n = AppLocalizations.of(context);
     final picker = ImagePicker();
     final image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       _navigateToSharePage(l10n, photo: File(image.path));
-    }
-  }
-
-  Future<void> _pickVideoAndNavigate() async {
-    final l10n = AppLocalizations.of(context);
-    final picker = ImagePicker();
-    final video = await picker.pickVideo(source: ImageSource.gallery);
-    if (video != null) {
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.mp4';
-      final savedVideo = await File(video.path).copy('${directory.path}/$fileName');
-      _navigateToSharePage(l10n, video: savedVideo);
     }
   }
 
