@@ -421,14 +421,16 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
     final picker = ImagePicker();
     final video = await picker.pickVideo(source: ImageSource.gallery);
     if (video != null) {
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.mp4';
+      final savedVideo = await File(video.path).copy('${directory.path}/$fileName');
       _videoController?.dispose();
-      final videoFile = File(video.path);
-      final controller = VideoPlayerController.file(videoFile);
+      final controller = VideoPlayerController.file(savedVideo);
       await controller.initialize();
       controller.setLooping(true);
       controller.play();
       setState(() {
-        _selectedVideo = videoFile;
+        _selectedVideo = savedVideo;
         _videoController = controller;
       });
     }
@@ -459,9 +461,11 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
       final file = File('${dir.path}/pawiva_share.png');
       await file.writeAsBytes(bytes);
 
-      List<XFile> files = [XFile(file.path)];
+      List<XFile> files;
       if (_selectedVideo != null) {
-        files.add(XFile(_selectedVideo!.path));
+        files = [XFile(_selectedVideo!.path)];
+      } else {
+        files = [XFile(file.path)];
       }
 
       await Share.shareXFiles(
