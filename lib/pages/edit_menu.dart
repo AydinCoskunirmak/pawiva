@@ -91,7 +91,7 @@ class EditMenuOverlay extends StatelessWidget {
                     ));
                   }),
                   _buildMenuDivider(scale),
-                  _buildMenuItem(l10n.alerts, scale, onTap: () {
+                  _buildMenuItem(l10n.reminders, scale, onTap: () {
                     Navigator.push(context, MaterialPageRoute(
                       builder: (context) => AlertPage(profiles: profiles),
                     ));
