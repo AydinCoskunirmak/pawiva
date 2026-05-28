@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:940279846081:android:6f004d6f4a55035108b040",
+        "mobilesdk_app_id": "1:940279846081:android:0ba0947ff723ad1208b040",
         "android_client_info": {
-          "package_name": "com.example.pawiva"
+          "package_name": "com.aydincoskunirmak.pawiva"
         }
       },
       "oauth_client": [],

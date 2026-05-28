@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.pawiva"
+    namespace = "com.aydincoskunirmak.pawiva"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.pawiva"
+        applicationId = "com.aydincoskunirmak.pawiva"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
