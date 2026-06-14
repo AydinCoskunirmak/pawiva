@@ -8,6 +8,7 @@ import UIKit
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+    VideoOverlayPlugin.register(with: self.registrar(forPlugin: "VideoOverlayPlugin")!)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

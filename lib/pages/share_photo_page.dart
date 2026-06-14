@@ -7,13 +7,15 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:video_player/video_player.dart';
+import 'package:file_picker/file_picker.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
+import 'package:pawiva/services/video_overlay_service.dart';
 
 class SharePhotoPage extends StatefulWidget {
   final List<String> petNames;
   final String activity;
-  final String timeRange; // "daily", "weekly", "monthly"
+  final String timeRange;
   final int totalSeconds;
   final Map<int, double> chartData;
   final int totalChartBars;
@@ -41,6 +43,7 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
   File? _selectedVideo;
   VideoPlayerController? _videoController;
   bool _isCapturing = false;
+  bool _isProcessingVideo = false;
   final GlobalKey _repaintKey = GlobalKey();
 
   @override
@@ -102,7 +105,6 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Main content
           Positioned(
             top: 0,
             left: 0,
@@ -113,7 +115,6 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
               child: _buildPreviewState(scale, l10n),
             ),
           ),
-          // Footer pinned to bottom
           Positioned(
             left: 0,
             right: 0,
@@ -142,12 +143,37 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
               ),
             ),
           ),
+          // Video işlenirken loading overlay
+          if (_isProcessingVideo)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.6),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(
+                        color: Color(0xFFFF8146),
+                      ),
+                      SizedBox(height: 16 * scale),
+                      Text(
+                        l10n.processingVideo,
+                        style: GoogleFonts.nunito(
+                          fontSize: 16 * scale,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildPreviewState(double scale, AppLocalizations l10n)  {
+  Widget _buildPreviewState(double scale, AppLocalizations l10n) {
     String statsValue;
     if (widget.timeRange == "daily") {
       statsValue = _formatTime(widget.totalSeconds, l10n);
@@ -195,12 +221,14 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
                               _videoController!.value.isInitialized &&
                               !_isCapturing
                               ? VideoPlayer(_videoController!)
-                              : Image.file(
+                              : (_selectedPhoto.path.isNotEmpty
+                              ? Image.file(
                             _selectedPhoto,
                             width: double.infinity,
                             height: double.infinity,
                             fit: BoxFit.cover,
-                          ),
+                          )
+                              : Container(color: Colors.grey[200])),
                           Positioned(
                             top: frameHeight * 0.12,
                             left: 0,
@@ -282,6 +310,34 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
                               ),
                             ),
                           ),
+                          // Video badge
+                          if (_selectedVideo != null)
+                            Positioned(
+                              top: 8 * scale,
+                              right: 8 * scale,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.6),
+                                  borderRadius: BorderRadius.circular(8 * scale),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.videocam, color: Colors.white, size: 12 * scale),
+                                    SizedBox(width: 4 * scale),
+                                    Text(
+                                      'VIDEO',
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 10 * scale,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                         ],
                       );
                     },
@@ -300,11 +356,11 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
               width: buttonWidth,
               scale: scale,
               icon: Icons.edit_outlined,
-              label: "${l10n.change}",
+              label: l10n.change,
             ),
             SizedBox(width: 8 * scale),
             _buildCustomButton(
-              onTap: _sharePhoto,
+              onTap: _isProcessingVideo ? () {} : _shareContent,
               width: buttonWidth,
               scale: scale,
               icon: Icons.ios_share,
@@ -375,7 +431,44 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
   }
 
   void _showPickerOptions() {
-    _pickImage();
+    final l10n = AppLocalizations.of(context);
+    final double scaleW = MediaQuery.of(context).size.width / 393;
+    final double scaleH = MediaQuery.of(context).size.height / 852;
+    final double scale = (scaleW + scaleH) / 2;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20 * scale)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(16 * scale),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.photo, color: const Color(0xFFFF8146), size: 24 * scale),
+                title: Text(l10n.addPhoto, style: GoogleFonts.nunito(fontSize: 16 * scale)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.videocam, color: const Color(0xFFFF8146), size: 24 * scale),
+                title: Text(l10n.addVideo, style: GoogleFonts.nunito(fontSize: 16 * scale)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickVideo();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _pickImage() async {
@@ -391,6 +484,91 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
     }
   }
 
+  Future<void> _pickVideo() async {
+    final result = await FilePicker.pickFiles(type: FileType.video);
+    if (result != null && result.files.single.path != null) {
+      final videoFile = File(result.files.single.path!);
+      _videoController?.dispose();
+      await _initVideo(videoFile);
+    }
+  }
+
+  Future<void> _shareContent() async {
+    if (_selectedVideo != null) {
+      await _shareVideo();
+    } else {
+      await _sharePhoto();
+    }
+  }
+
+  Future<void> _shareVideo() async {
+    final l10n = AppLocalizations.of(context);
+
+    setState(() => _isProcessingVideo = true);
+
+    try {
+      // Chart değerlerini normalize et
+      final maxVal = widget.chartData.values.isEmpty
+          ? 1.0
+          : widget.chartData.values.reduce((a, b) => a > b ? a : b);
+      final chartValues = List.generate(widget.totalChartBars, (i) {
+        final val = widget.chartData[i] ?? 0.0;
+        return maxVal > 0 ? val / maxVal : 0.0;
+      });
+
+      String statsValue;
+      if (widget.timeRange == "daily") {
+        statsValue = _formatTime(widget.totalSeconds, l10n);
+      } else {
+        int avgSeconds = widget.totalSeconds ~/ (widget.timeRange == "weekly" ? 7 : widget.totalChartBars);
+        statsValue = "${_formatTime(avgSeconds, l10n)}${l10n.perDay}";
+      }
+
+      String translatedTimeRange;
+      if (widget.timeRange == "daily") {
+        translatedTimeRange = l10n.dailyFull;
+      } else if (widget.timeRange == "weekly") {
+        translatedTimeRange = l10n.weeklyFull;
+      } else {
+        translatedTimeRange = l10n.monthlyFull;
+      }
+
+      debugPrint('Video path: ' + _selectedVideo!.path);
+      debugPrint('Video exists: ' + _selectedVideo!.existsSync().toString());
+      final outputFile = await VideoOverlayService.addOverlayToVideo(
+        videoPath: _selectedVideo!.path,
+        petNames: widget.petNames.join(", "),
+        activity: widget.activity,
+        timeValue: statsValue,
+        timeRange: translatedTimeRange,
+        chartValues: chartValues,
+      );
+
+      setState(() => _isProcessingVideo = false);
+      debugPrint('Output path: ' + (outputFile?.path ?? 'NULL'));
+      debugPrint('File exists: ' + (outputFile?.existsSync().toString() ?? 'false'));
+
+      if (outputFile == null) {
+        _showError(l10n.videoProcessError);
+        return;
+      }
+
+      await Share.shareXFiles(
+        [XFile(outputFile.path)],
+        text: l10n.checkOutActivity,
+        sharePositionOrigin: Rect.fromCenter(
+          center: MediaQuery.of(context).size.center(Offset.zero),
+          width: 200,
+          height: 200,
+        ),
+      );
+    } catch (e) {
+      setState(() => _isProcessingVideo = false);
+      _showError(l10n.videoProcessError);
+      debugPrint('Video share error: $e');
+      debugPrint('Error details: ${e.toString()}');
+    }
+  }
 
   Future<void> _sharePhoto() async {
     final l10n = AppLocalizations.of(context);
@@ -400,7 +578,6 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
 
       final boundary = _repaintKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) {
-        debugPrint('RepaintBoundary not found');
         setState(() => _isCapturing = false);
         return;
       }
@@ -418,15 +595,8 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
       final file = File('${dir.path}/pawiva_share.png');
       await file.writeAsBytes(bytes);
 
-      List<XFile> files;
-      if (_selectedVideo != null) {
-        files = [XFile(_selectedVideo!.path)];
-      } else {
-        files = [XFile(file.path)];
-      }
-
       await Share.shareXFiles(
-        files,
+        [XFile(file.path)],
         text: l10n.checkOutActivity,
         sharePositionOrigin: Rect.fromCenter(
           center: MediaQuery.of(context).size.center(Offset.zero),
@@ -438,6 +608,16 @@ class _SharePhotoPageState extends State<SharePhotoPage> {
       debugPrint('Share error: $e');
       setState(() => _isCapturing = false);
     }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.nunito()),
+        backgroundColor: const Color(0xFFFF8146),
+      ),
+    );
   }
 
   String _formatTime(int totalSeconds, AppLocalizations l10n) {

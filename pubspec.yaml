@@ -45,6 +45,8 @@ dependencies:
   firebase_core: ^4.9.0
   firebase_analytics: ^12.4.1
   firebase_crashlytics: ^5.2.2
+  ffmpeg_kit_flutter_new: ^4.2.1
+  file_picker: ^11.0.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
