@@ -9,6 +9,7 @@ import 'package:pawiva/models/timer_log.dart';
 import 'package:pawiva/models/pet_profile.dart';
 import 'package:pawiva/pages/share_photo_page.dart';
 import 'package:pawiva/l10n/app_localizations.dart';
+import 'package:file_picker/file_picker.dart';
 
 class StatisticsView extends StatefulWidget {
   final List<TimerLog> logs;
@@ -262,9 +263,9 @@ class StatisticsViewState extends State<StatisticsView> {
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    "+ ${l10n.addPhoto}",
+                    "+ ${l10n.addPhoto} / ${l10n.addVideo}",
                     style: GoogleFonts.nunito(
-                      fontSize: 24 * scale,
+                      fontSize: 16 * scale,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
@@ -292,11 +293,50 @@ class StatisticsViewState extends State<StatisticsView> {
 
   Future<void> _pickImageAndNavigate() async {
     final l10n = AppLocalizations.of(context);
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      _navigateToSharePage(l10n, photo: File(image.path));
-    }
+    final double scaleW = MediaQuery.of(context).size.width / 393;
+    final double scaleH = MediaQuery.of(context).size.height / 852;
+    final double scale = (scaleW + scaleH) / 2;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20 * scale)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(16 * scale),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.photo, color: const Color(0xFFFF8146), size: 24 * scale),
+                title: Text(l10n.addPhoto),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final picker = ImagePicker();
+                  final image = await picker.pickImage(source: ImageSource.gallery);
+                  if (image != null) {
+                    _navigateToSharePage(l10n, photo: File(image.path));
+                  }
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.videocam, color: const Color(0xFFFF8146), size: 24 * scale),
+                title: Text(l10n.addVideo),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await FilePicker.pickFiles(type: FileType.video);
+                  if (result != null && result.files.single.path != null) {
+                    _navigateToSharePage(l10n, video: File(result.files.single.path!));
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _navigateToSharePage(AppLocalizations l10n, {File? photo, File? video}) {
