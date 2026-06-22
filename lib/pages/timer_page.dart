@@ -424,8 +424,7 @@ class _TimerPageState extends State<TimerPage> with WidgetsBindingObserver {
               ],
             ),
           ),
-          if (_isEditMenuOpen)
-            EditMenuOverlay(
+          EditMenuOverlay(
               isOpen: _isEditMenuOpen,
               onClose: () => setState(() => _isEditMenuOpen = false),
               profiles: widget.profiles,

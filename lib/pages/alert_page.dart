@@ -17,7 +17,6 @@ class AlertPage extends StatefulWidget {
 }
 
 class _AlertPageState extends State<AlertPage> {
-  int? _selectedPetIndex;
   String? _selectedActivity;
   TimeOfDay _selectedTime = TimeOfDay.now();
   String? _selectedRepeat;
@@ -108,7 +107,7 @@ class _AlertPageState extends State<AlertPage> {
   }
 
   void _addReminder() {
-    if (_selectedPetIndex == null || _selectedActivity == null || _selectedRepeat == null) return;
+    if (_selectedActivity == null || _selectedRepeat == null) return;
 
     bool isToday = _selectedRepeat == "today";
     List<int> weekdays = [];
@@ -129,7 +128,7 @@ class _AlertPageState extends State<AlertPage> {
 
     final newReminder = ReminderModel(
       id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
-      petName: widget.profiles[_selectedPetIndex!].name,
+      petName: '',  // pet seçimi kaldırıldı
       activity: _selectedActivity!,
       time: _selectedTime,
       weekdays: weekdays,
@@ -154,7 +153,6 @@ class _AlertPageState extends State<AlertPage> {
   }
 
   void _resetForm() {
-    _selectedPetIndex = null;
     _selectedActivity = null;
     _selectedTime = TimeOfDay.now();
     _selectedRepeat = null;
@@ -167,9 +165,7 @@ class _AlertPageState extends State<AlertPage> {
     final double scaleH = MediaQuery.of(context).size.height / 852;
     final double scale = (scaleW + scaleH) / 2;
 
-    bool isFormValid = _selectedPetIndex != null && 
-                       _selectedActivity != null && 
-                       _selectedRepeat != null;
+    bool isFormValid = _selectedActivity != null && _selectedRepeat != null;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -203,9 +199,6 @@ class _AlertPageState extends State<AlertPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionLabel(l10n.selectPet, scale),
-                        _buildPetSelection(scale),
-                        SizedBox(height: 16 * scaleH),
                         _buildSectionLabel(l10n.selectActivity, scale),
                         _buildActivitySelection(scale, l10n),
                         SizedBox(height: 16 * scaleH),
@@ -296,58 +289,6 @@ class _AlertPageState extends State<AlertPage> {
           fontWeight: FontWeight.w400,
           color: Colors.black.withValues(alpha: 0.5),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPetSelection(double scale) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: widget.profiles.asMap().entries.map((entry) {
-          int idx = entry.key;
-          PetProfile pet = entry.value;
-          bool isSelected = _selectedPetIndex == idx;
-          return GestureDetector(
-            onTap: () => setState(() => _selectedPetIndex = idx),
-            child: Opacity(
-              opacity: isSelected ? 1.0 : 0.5,
-              child: Padding(
-                padding: EdgeInsets.only(right: 16 * scale),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 50 * scale,
-                      height: 50 * scale,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18 * scale),
-                        border: Border.all(color: Colors.black, width: 1 * scale),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(18 * scale),
-                        child: pet.image != null
-                            ? Image.file(pet.image!, fit: BoxFit.cover)
-                            : Container(
-                                color: Colors.grey[300],
-                                child: Icon(Icons.pets, size: 24 * scale, color: Colors.grey[600]),
-                              ),
-                      ),
-                    ),
-                    SizedBox(height: 4 * scale),
-                    Text(
-                      pet.name,
-                      style: GoogleFonts.nunito(
-                        fontSize: 14 * scale,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
       ),
     );
   }
@@ -531,7 +472,7 @@ class _AlertPageState extends State<AlertPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "${reminder.petName} - ${_getTranslatedActivity(reminder.activity, l10n)}",
+                  "${_getTranslatedActivity(reminder.activity, l10n)}",
                   style: GoogleFonts.nunito(
                     fontSize: 16 * scale,
                     fontWeight: FontWeight.w600,

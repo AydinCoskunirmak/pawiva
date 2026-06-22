@@ -187,9 +187,9 @@ class EditMenuOverlay extends StatelessWidget {
 
   Future<void> _rateApp(BuildContext context) async {
     final Uri url = Platform.isIOS
-        ? Uri.parse('https://apps.apple.com/app/idYOUR_APP_ID')
+        ? Uri.parse('https://apps.apple.com/app/id6774226338?action=write-review')
         : Uri.parse(
-            'https://play.google.com/store/apps/details?id=com.example.pawiva');
+            'https://play.google.com/store/apps/details?id=com.aydincoskunirmak.pawiva&showAllReviews=true');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
@@ -197,8 +197,11 @@ class EditMenuOverlay extends StatelessWidget {
 
   Future<void> _shareApp() async {
     const String message = 'Check out Pawiva - Pet Activity & Time Tracker!\n\n'
-        'iOS: https://apps.apple.com/app/idYOUR_APP_ID\n'
-        'Android: https://play.google.com/store/apps/details?id=com.example.pawiva';
-    await Share.share(message);
+        'iOS: https://apps.apple.com/app/id6774226338\n'
+        'Android: https://play.google.com/store/apps/details?id=com.aydincoskunirmak.pawiva';
+    await Share.share(
+      message,
+      sharePositionOrigin: Rect.fromLTWH(0, 0, 200, 200),
+    );
   }
 }

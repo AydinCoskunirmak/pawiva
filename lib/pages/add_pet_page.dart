@@ -328,7 +328,9 @@ class _AddPetPageState extends State<AddPetPage> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: Container(
+            child: SafeArea(
+              top: false,
+              child: Container(
               width: double.infinity,
               height: 63 * scaleH,
               decoration: BoxDecoration(
@@ -367,6 +369,7 @@ class _AddPetPageState extends State<AddPetPage> {
                   ),
                 ),
               ),
+            ),
             ),
           ),
         ],
