@@ -71,6 +71,8 @@ class _AboutUsPageState extends State<AboutUsPage> {
     final double scaleW = MediaQuery.of(context).size.width / 393;
     final double scaleH = MediaQuery.of(context).size.height / 852;
     final double scale = (scaleW + scaleH) / 2;
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
+    final double navBar = bottomInset > 40 ? bottomInset : 0.0;
 
     final l10n = AppLocalizations.of(context);
 
@@ -78,7 +80,8 @@ class _AboutUsPageState extends State<AboutUsPage> {
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       bottomNavigationBar: Container(
-        height: 63 * scaleH,
+        padding: EdgeInsets.only(bottom: navBar),
+        height: 63 * scaleH + navBar,
         decoration: BoxDecoration(
           color: const Color(0xFFFAE3C6),
           boxShadow: [

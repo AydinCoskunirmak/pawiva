@@ -112,6 +112,8 @@ class _AddPetPageState extends State<AddPetPage> {
     final double scaleW = screenWidth / 393;
     final double scaleH = MediaQuery.of(context).size.height / 852;
     final double scale = (scaleW + scaleH) / 2;
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
+    final double navBar = bottomInset > 40 ? bottomInset : 0.0;
 
     bool isFormValid = _nameController.text.isNotEmpty && _selectedPetType != null;
 
@@ -130,14 +132,14 @@ class _AddPetPageState extends State<AddPetPage> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: EdgeInsets.only(bottom: 63 * scaleH),
+                padding: EdgeInsets.only(bottom: 63 * scaleH + navBar),
                 child: GestureDetector(
                   onTap: () => FocusScope.of(context).unfocus(),
                   behavior: HitTestBehavior.translucent,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      SizedBox(height: 63 * scaleH),
+                      SizedBox(height: 63 * scaleH + navBar),
                       // Title
                       Text(
                         l10n.addYourPets,
@@ -328,11 +330,10 @@ class _AddPetPageState extends State<AddPetPage> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: SafeArea(
-              top: false,
-              child: Container(
+            child: Container(
               width: double.infinity,
-              height: 63 * scaleH,
+              padding: EdgeInsets.only(bottom: navBar),
+              height: 63 * scaleH + navBar,
               decoration: BoxDecoration(
                 color: const Color(0xFFFAE3C6),
                 boxShadow: [
@@ -369,7 +370,6 @@ class _AddPetPageState extends State<AddPetPage> {
                   ),
                 ),
               ),
-            ),
             ),
           ),
         ],

@@ -115,6 +115,8 @@ class _EditPetDetailPageState extends State<EditPetDetailPage> {
     final double scaleW = MediaQuery.of(context).size.width / 393;
     final double scaleH = MediaQuery.of(context).size.height / 852;
     final double scale = (scaleW + scaleH) / 2;
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
+    final double navBar = bottomInset > 40 ? bottomInset : 0.0;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -125,7 +127,7 @@ class _EditPetDetailPageState extends State<EditPetDetailPage> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: EdgeInsets.only(bottom: 63 * scaleH),
+                padding: EdgeInsets.only(bottom: 63 * scaleH + navBar),
                 child: Column(
                   children: [
                     Container(
@@ -240,7 +242,8 @@ class _EditPetDetailPageState extends State<EditPetDetailPage> {
             right: 0,
             bottom: 0,
             child: Container(
-              height: 63 * scaleH,
+              padding: EdgeInsets.only(bottom: navBar),
+              height: 63 * scaleH + navBar,
               decoration: BoxDecoration(
                 color: const Color(0xFFFAE3C6),
                 boxShadow: [
