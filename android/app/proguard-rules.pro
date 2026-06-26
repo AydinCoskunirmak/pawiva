@@ -51,3 +51,8 @@
 }
 -keep class io.flutter.embedding.engine.FlutterJNI { *; }
 -keepattributes RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations
+
+# ffmpeg_kit_flutter_new
+-keep class com.arthenica.ffmpegkit.** { *; }
+-keep class com.arthenica.smartexception.** { *; }
+-dontwarn com.arthenica.ffmpegkit.**

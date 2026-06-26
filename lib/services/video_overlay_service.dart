@@ -62,11 +62,6 @@ class VideoOverlayService {
       final safeTimeRange = timeRange.replaceAll("'", "").replaceAll(":", "");
       final safeTimeValue = timeValue.replaceAll("'", "").replaceAll(":", "");
 
-      // Grafik overlay PNG oluştur
-      final overlayFile = await _createChartOverlayPng(
-        dir: dir, chartValues: chartValues,
-      );
-
       // Font dosyasını app cache'e kopyala
       final fontDest = File(dir.path + '/Nunito-Medium.ttf');
       if (!fontDest.existsSync()) {
@@ -81,22 +76,42 @@ class VideoOverlayService {
       }
       final nanumFile = nanumDest.path;
 
+      // Chart bar'ları drawbox ile (videonun w/h oranına göre - her çözünürlükte tutarlı)
+      final chartBoxes = <String>[];
+      if (chartValues.isNotEmpty) {
+        final maxVal = chartValues.reduce((a, b) => a > b ? a : b);
+        const chartLeftR = 0.3;   // w oranı
+        const chartTopR = 0.72;   // h oranı
+        const chartWidthR = 0.4;  // w oranı
+        const chartHeightR = 0.10;// h oranı
+        final spacingR = chartWidthR / chartValues.length;
+        final barWidthR = spacingR * 0.6;
+        for (int i = 0; i < chartValues.length; i++) {
+          final normalized = maxVal > 0 ? chartValues[i] / maxVal : 0.0;
+          final barHeightR = chartHeightR * normalized;
+          // 0 veya çok küçük değerli barları atla (FFmpeg h=0'ı tüm yükseklik sayıyor)
+          if (barHeightR < 0.002) continue;
+          final leftR = chartLeftR + i * spacingR + (spacingR - barWidthR) / 2;
+          final topR = chartTopR + chartHeightR - barHeightR;
+          chartBoxes.add(
+            "drawbox=x=iw*${leftR.toStringAsFixed(5)}:y=ih*${topR.toStringAsFixed(5)}:"
+            "w=iw*${barWidthR.toStringAsFixed(5)}:h=ih*${barHeightR.toStringAsFixed(5)}:"
+            "color=0xFF8146:t=fill"
+          );
+        }
+      }
+      final chartFilter = chartBoxes.isEmpty ? "" : "${chartBoxes.join(',')},";
+
       final drawText = [
-        "drawtext=fontfile='$fontFile':text='$safeNames':fontcolor=white:fontsize=65:x=(w-text_w)/2:y=h*0.12:shadowcolor=black:shadowx=2:shadowy=2",
-        "drawtext=fontfile='$fontFile':text='$safeActivity':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=h*0.17:shadowcolor=black:shadowx=2:shadowy=2",
-        "drawtext=fontfile='$fontFile':text='$safeTimeRange':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=h*0.62:shadowcolor=black:shadowx=2:shadowy=2",
-        "drawtext=fontfile='$fontFile':text='$safeTimeValue':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=h*0.66:shadowcolor=black:shadowx=2:shadowy=2",
-        "drawtext=fontfile='$nanumFile':text='PAWIVA':fontcolor=white:fontsize=70:x=(w-text_w)/2:y=h*0.87:shadowcolor=black:shadowx=2:shadowy=2",
+        "drawtext=fontfile='$fontFile':text='$safeNames':fontcolor=white:fontsize=h*0.035:x=(w-text_w)/2:y=h*0.12:shadowcolor=black:shadowx=2:shadowy=2",
+        "drawtext=fontfile='$fontFile':text='$safeActivity':fontcolor=white:fontsize=h*0.032:x=(w-text_w)/2:y=h*0.17:shadowcolor=black:shadowx=2:shadowy=2",
+        "drawtext=fontfile='$fontFile':text='$safeTimeRange':fontcolor=white:fontsize=h*0.032:x=(w-text_w)/2:y=h*0.62:shadowcolor=black:shadowx=2:shadowy=2",
+        "drawtext=fontfile='$fontFile':text='$safeTimeValue':fontcolor=white:fontsize=h*0.032:x=(w-text_w)/2:y=h*0.66:shadowcolor=black:shadowx=2:shadowy=2",
+        "drawtext=fontfile='$nanumFile':text='PAWIVA':fontcolor=white:fontsize=h*0.038:x=(w-text_w)/2:y=h*0.87:shadowcolor=black:shadowx=2:shadowy=2",
       ].join(',');
 
-      String cmd;
-      if (overlayFile != null) {
-        cmd = '-i "$videoPath" -i "${overlayFile.path}" '
-            '-filter_complex "[0:v][1:v]overlay=0:0,$drawText" '
-            '-c:v libx264 -preset ultrafast -c:a copy "$outputPath"';
-      } else {
-        cmd = '-i "$videoPath" -vf "$drawText" -c:v libx264 -preset ultrafast -c:a copy "$outputPath"';
-      }
+      final cmd = '-i "$videoPath" -vf "$chartFilter$drawText" '
+          '-c:v libx264 -preset ultrafast -pix_fmt yuv420p -c:a copy "$outputPath"';
 
       final completer = Completer<ReturnCode?>();
       await FFmpegKit.executeAsync(cmd, (session) async {
@@ -108,7 +123,6 @@ class VideoOverlayService {
       final returnCode = await completer.future;
 
       if (ReturnCode.isSuccess(returnCode)) {
-        overlayFile?.deleteSync();
         return File(outputPath);
       } else {
         print('FFmpeg failed with return code: $returnCode');

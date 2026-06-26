@@ -45,7 +45,6 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     let tSize = naturalSize.applying(transform)
     let videoSize = CGSize(width: abs(tSize.width), height: abs(tSize.height))
 
-    // Overlay image
     let overlayImage = createOverlayImage(size: videoSize, petNames: petNames, activity: activity,
                                           timeValue: timeValue, timeRange: timeRange, chartValues: chartValues)
     guard let overlayCG = overlayImage.cgImage else {
@@ -54,7 +53,6 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     }
     let overlayCI = CIImage(cgImage: overlayCG)
 
-    // Video composition with Core Image filter
     let filter = CIFilter(name: "CISourceOverCompositing")!
     let videoComp = AVMutableVideoComposition(asset: asset) { request in
       let source = request.sourceImage.clampedToExtent()
@@ -66,7 +64,6 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     videoComp.renderSize = videoSize
     videoComp.frameDuration = CMTime(value: 1, timescale: 30)
 
-    // Output
     let outputURL = FileManager.default.temporaryDirectory
       .appendingPathComponent("pawiva_\(Int(Date().timeIntervalSince1970)).mp4")
     try? FileManager.default.removeItem(at: outputURL)
@@ -97,47 +94,48 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     defer { UIGraphicsEndImageContext() }
     guard let ctx = UIGraphicsGetCurrentContext() else { return UIImage() }
 
-    // Alt bant
-
     let shadow = NSShadow()
     shadow.shadowColor = UIColor.black.withAlphaComponent(0.8)
     shadow.shadowBlurRadius = 3
     shadow.shadowOffset = CGSize(width: 0, height: 1)
 
+    let nunitoBig = UIFont(name: "Nunito-Medium", size: size.width * 0.055) ?? UIFont.boldSystemFont(ofSize: size.width * 0.055)
+    let nunitoMed = UIFont(name: "Nunito-Medium", size: size.width * 0.055) ?? UIFont.boldSystemFont(ofSize: size.width * 0.055)
+    let nunitoSmall = UIFont(name: "Nunito-Medium", size: size.width * 0.055) ?? UIFont.systemFont(ofSize: size.width * 0.055)
+    let nanumFont = UIFont(name: "NanumBrush", size: size.width * 0.055) ?? UIFont.systemFont(ofSize: size.width * 0.055)
+
     let bigAttrs: [NSAttributedString.Key: Any] = [
       .foregroundColor: UIColor.white,
-      .font: UIFont(name: "Nunito-Medium", size: size.width * 0.055) ?? UIFont.boldSystemFont(ofSize: size.width * 0.055),
+      .font: nunitoBig,
       .shadow: shadow
     ]
     let medAttrs: [NSAttributedString.Key: Any] = [
       .foregroundColor: UIColor.white,
-      .font: UIFont(name: "Nunito-Medium", size: size.width * 0.055) ?? UIFont.boldSystemFont(ofSize: size.width * 0.055),
+      .font: nunitoMed,
       .shadow: shadow
     ]
     let smallAttrs: [NSAttributedString.Key: Any] = [
       .foregroundColor: UIColor.white,
-      .font: UIFont(name: "Nunito-Medium", size: size.width * 0.055) ?? UIFont.boldSystemFont(ofSize: size.width * 0.055),
+      .font: nunitoSmall,
       .shadow: shadow
     ]
-      let pawAttrs: [NSAttributedString.Key: Any] = [
-        .foregroundColor: UIColor.white,
-        .font: UIFont(name: "NanumBrush", size: size.width * 0.06) ?? UIFont.systemFont(ofSize: size.width * 0.06),
-        .shadow: shadow
-      ]
-    // Pet ismi - üstte
-    drawText(petNames, rect: CGRect(x: 0, y: size.height * 0.08, width: size.width, height: size.width * 0.08), attrs: bigAttrs)
-    drawText(activity, rect: CGRect(x: 0, y: size.height * 0.15, width: size.width, height: size.width * 0.07), attrs: medAttrs)
+    let pawAttrs: [NSAttributedString.Key: Any] = [
+      .foregroundColor: UIColor.white,
+      .font: nanumFont,
+      .shadow: shadow
+    ]
 
-    // Alt bilgiler
-      drawText(timeRange, rect: CGRect(x: 0, y: size.height * 0.70, width: size.width, height: size.width * 0.06), attrs: smallAttrs)
-      drawText(timeValue, rect: CGRect(x: 0, y: size.height * 0.74, width: size.width, height: size.width * 0.06), attrs: smallAttrs)
-    drawChart(ctx: ctx, values: chartValues, frame: CGRect(x: size.width * 0.3, y: size.height * 0.78, width: size.width * 0.4, height: size.height * 0.08))
-    drawText("PAWIVA", rect: CGRect(x: 0, y: size.height * 0.88, width: size.width, height: size.width * 0.05), attrs: pawAttrs)
+    drawCenteredText(petNames, in: CGRect(x: 0, y: size.height * 0.12, width: size.width, height: size.width * 0.08), attrs: bigAttrs)
+    drawCenteredText(activity, in: CGRect(x: 0, y: size.height * 0.17, width: size.width, height: size.width * 0.07), attrs: medAttrs)
+    drawCenteredText(timeRange, in: CGRect(x: 0, y: size.height * 0.62, width: size.width, height: size.width * 0.06), attrs: smallAttrs)
+    drawCenteredText(timeValue, in: CGRect(x: 0, y: size.height * 0.66, width: size.width, height: size.width * 0.06), attrs: smallAttrs)
+    drawChart(ctx: ctx, values: chartValues, frame: CGRect(x: size.width * 0.3, y: size.height * 0.70, width: size.width * 0.4, height: size.height * 0.10))
+    drawCenteredText("PAWIVA", in: CGRect(x: 0, y: size.height * 0.87, width: size.width, height: size.width * 0.05), attrs: pawAttrs)
 
     return UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
   }
 
-  private func drawText(_ text: String, rect: CGRect, attrs: [NSAttributedString.Key: Any]) {
+  private func drawCenteredText(_ text: String, in rect: CGRect, attrs: [NSAttributedString.Key: Any]) {
     let str = NSAttributedString(string: text, attributes: attrs)
     let strSize = str.size()
     let x = rect.minX + (rect.width - strSize.width) / 2
