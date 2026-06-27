@@ -105,24 +105,16 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     let nanumFont = UIFont(name: "NanumBrush", size: size.width * 0.055) ?? UIFont.systemFont(ofSize: size.width * 0.055)
 
     let bigAttrs: [NSAttributedString.Key: Any] = [
-      .foregroundColor: UIColor.white,
-      .font: nunitoBig,
-      .shadow: shadow
+      .foregroundColor: UIColor.white, .font: nunitoBig, .shadow: shadow
     ]
     let medAttrs: [NSAttributedString.Key: Any] = [
-      .foregroundColor: UIColor.white,
-      .font: nunitoMed,
-      .shadow: shadow
+      .foregroundColor: UIColor.white, .font: nunitoMed, .shadow: shadow
     ]
     let smallAttrs: [NSAttributedString.Key: Any] = [
-      .foregroundColor: UIColor.white,
-      .font: nunitoSmall,
-      .shadow: shadow
+      .foregroundColor: UIColor.white, .font: nunitoSmall, .shadow: shadow
     ]
     let pawAttrs: [NSAttributedString.Key: Any] = [
-      .foregroundColor: UIColor.white,
-      .font: nanumFont,
-      .shadow: shadow
+      .foregroundColor: UIColor.white, .font: nanumFont, .shadow: shadow
     ]
 
     drawCenteredText(petNames, in: CGRect(x: 0, y: size.height * 0.12, width: size.width, height: size.width * 0.08), attrs: bigAttrs)
@@ -150,6 +142,7 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     ctx.setFillColor(UIColor(red: 1.0, green: 0.506, blue: 0.275, alpha: 1.0).cgColor)
     for (i, v) in values.enumerated() {
       let barHeight = frame.height * CGFloat(v / maxVal)
+      if barHeight < 1 { continue }
       let x = frame.minX + CGFloat(i) * spacing + (spacing - barWidth) / 2
       let y = frame.maxY - barHeight
       let path = UIBezierPath(roundedRect: CGRect(x: x, y: y, width: barWidth, height: barHeight), cornerRadius: 2)

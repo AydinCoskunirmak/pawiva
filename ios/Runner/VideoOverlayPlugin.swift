@@ -2,7 +2,6 @@ import Flutter
 import UIKit
 import AVFoundation
 import CoreImage
-import CoreGraphics
 
 public class VideoOverlayPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
@@ -46,30 +45,16 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     let tSize = naturalSize.applying(transform)
     let videoSize = CGSize(width: abs(tSize.width), height: abs(tSize.height))
 
-    // Overlay bitmap oluştur
     let overlayImage = createOverlayImage(size: videoSize, petNames: petNames, activity: activity,
                                           timeValue: timeValue, timeRange: timeRange, chartValues: chartValues)
-    guard let overlayCI = CIImage(image: overlayImage) else {
+    guard let overlayCG = overlayImage.cgImage else {
       DispatchQueue.main.async { result(FlutterError(code: "OVERLAY_ERROR", message: "Cannot create overlay", details: nil)) }
       return
     }
+    let overlayCI = CIImage(cgImage: overlayCG)
 
-    // Composition
-    let comp = AVMutableComposition()
-    guard let vTrack = comp.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-      DispatchQueue.main.async { result(FlutterError(code: "COMP_ERROR", message: "Composition error", details: nil)) }
-      return
-    }
-    try? vTrack.insertTimeRange(CMTimeRange(start: .zero, duration: asset.duration), of: videoTrack, at: .zero)
-
-    if let aTrack = asset.tracks(withMediaType: .audio).first,
-       let aCompTrack = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid) {
-      try? aCompTrack.insertTimeRange(CMTimeRange(start: .zero, duration: asset.duration), of: aTrack, at: .zero)
-    }
-
-    // Core Image filter ile overlay
     let filter = CIFilter(name: "CISourceOverCompositing")!
-    let videoComp = AVMutableVideoComposition(asset: comp) { request in
+    let videoComp = AVMutableVideoComposition(asset: asset) { request in
       let source = request.sourceImage.clampedToExtent()
       filter.setValue(overlayCI, forKey: kCIInputImageKey)
       filter.setValue(source, forKey: kCIInputBackgroundImageKey)
@@ -79,25 +64,25 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     videoComp.renderSize = videoSize
     videoComp.frameDuration = CMTime(value: 1, timescale: 30)
 
-    // Export
     let outputURL = FileManager.default.temporaryDirectory
-      .appendingPathComponent("pawiva_\(Int(Date().timeIntervalSince1970)).mov")
+      .appendingPathComponent("pawiva_\(Int(Date().timeIntervalSince1970)).mp4")
+    try? FileManager.default.removeItem(at: outputURL)
 
-    guard let export = AVAssetExportSession(asset: asset, presetName: AVAssetExportPreset1920x1080) else {
+    guard let export = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
       DispatchQueue.main.async { result(FlutterError(code: "EXPORT_ERROR", message: "Cannot create export", details: nil)) }
       return
     }
     export.outputURL = outputURL
-    export.outputFileType = .mov
-    // export.videoComposition = videoComp
+    export.outputFileType = .mp4
+    export.videoComposition = videoComp
+
     export.exportAsynchronously {
       DispatchQueue.main.async {
         if export.status == .completed {
-          // Galerie kaydet - debug için
-          UISaveVideoAtPathToSavedPhotosAlbum(outputURL.path, nil, nil, nil)
           result(outputURL.path)
         } else {
-          result(FlutterError(code: "EXPORT_FAILED", message: export.error?.localizedDescription ?? "Failed", details: nil))
+          result(FlutterError(code: "EXPORT_FAILED",
+            message: export.error?.localizedDescription ?? "Export failed", details: nil))
         }
       }
     }
@@ -106,49 +91,47 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
   private func createOverlayImage(size: CGSize, petNames: String, activity: String,
                                    timeValue: String, timeRange: String, chartValues: [Double]) -> UIImage {
     UIGraphicsBeginImageContextWithOptions(size, false, 1.0)
-    let ctx = UIGraphicsGetCurrentContext()!
-
+    defer { UIGraphicsEndImageContext() }
+    guard let ctx = UIGraphicsGetCurrentContext() else { return UIImage() }
 
     let shadow = NSShadow()
-    shadow.shadowColor = UIColor.black
+    shadow.shadowColor = UIColor.black.withAlphaComponent(0.8)
     shadow.shadowBlurRadius = 3
     shadow.shadowOffset = CGSize(width: 0, height: 1)
 
-    let attrs: [NSAttributedString.Key: Any] = [
-      .foregroundColor: UIColor.white,
-      .font: UIFont.boldSystemFont(ofSize: size.width * 0.06),
-      .shadow: shadow
+    let nunitoBig = UIFont(name: "Nunito-Medium", size: size.width * 0.055) ?? UIFont.boldSystemFont(ofSize: size.width * 0.055)
+    let nunitoMed = UIFont(name: "Nunito-Medium", size: size.width * 0.055) ?? UIFont.boldSystemFont(ofSize: size.width * 0.055)
+    let nunitoSmall = UIFont(name: "Nunito-Medium", size: size.width * 0.055) ?? UIFont.systemFont(ofSize: size.width * 0.055)
+    let nanumFont = UIFont(name: "NanumBrush", size: size.width * 0.055) ?? UIFont.systemFont(ofSize: size.width * 0.055)
+
+    let bigAttrs: [NSAttributedString.Key: Any] = [
+      .foregroundColor: UIColor.white, .font: nunitoBig, .shadow: shadow
+    ]
+    let medAttrs: [NSAttributedString.Key: Any] = [
+      .foregroundColor: UIColor.white, .font: nunitoMed, .shadow: shadow
     ]
     let smallAttrs: [NSAttributedString.Key: Any] = [
-      .foregroundColor: UIColor.white,
-      .font: UIFont.boldSystemFont(ofSize: size.width * 0.045),
-      .shadow: shadow
+      .foregroundColor: UIColor.white, .font: nunitoSmall, .shadow: shadow
     ]
-    let tinyAttrs: [NSAttributedString.Key: Any] = [
-      .foregroundColor: UIColor.white,
-      .font: UIFont.systemFont(ofSize: size.width * 0.04),
-      .shadow: shadow
+    let pawAttrs: [NSAttributedString.Key: Any] = [
+      .foregroundColor: UIColor.white, .font: nanumFont, .shadow: shadow
     ]
 
-    // Pet ismi - üstte (UIKit y=0 üstte)
-    drawCenteredText(petNames, in: CGRect(x: 0, y: size.height * 0.10, width: size.width, height: size.width * 0.08), attrs: attrs)
-    drawCenteredText(activity, in: CGRect(x: 0, y: size.height * 0.17, width: size.width, height: size.width * 0.07), attrs: smallAttrs)
+    drawCenteredText(petNames, in: CGRect(x: 0, y: size.height * 0.12, width: size.width, height: size.width * 0.08), attrs: bigAttrs)
+    drawCenteredText(activity, in: CGRect(x: 0, y: size.height * 0.17, width: size.width, height: size.width * 0.07), attrs: medAttrs)
+    drawCenteredText(timeRange, in: CGRect(x: 0, y: size.height * 0.62, width: size.width, height: size.width * 0.06), attrs: smallAttrs)
+    drawCenteredText(timeValue, in: CGRect(x: 0, y: size.height * 0.66, width: size.width, height: size.width * 0.06), attrs: smallAttrs)
+    drawChart(ctx: ctx, values: chartValues, frame: CGRect(x: size.width * 0.3, y: size.height * 0.70, width: size.width * 0.4, height: size.height * 0.10))
+    drawCenteredText("PAWIVA", in: CGRect(x: 0, y: size.height * 0.87, width: size.width, height: size.width * 0.05), attrs: pawAttrs)
 
-    // Alt bilgiler
-    drawCenteredText("\(timeRange)  \(timeValue)", in: CGRect(x: 0, y: size.height * 0.62, width: size.width, height: size.width * 0.06), attrs: tinyAttrs)
-    drawChart(ctx: ctx, values: chartValues, frame: CGRect(x: size.width * 0.3, y: size.height * 0.68, width: size.width * 0.4, height: size.height * 0.08))
-    drawCenteredText("PAWIVA", in: CGRect(x: 0, y: size.height * 0.84, width: size.width, height: size.width * 0.05), attrs: tinyAttrs)
-
-    let image = UIGraphicsGetImageFromCurrentImageContext()!
-    UIGraphicsEndImageContext()
-    return image
+    return UIGraphicsGetImageFromCurrentImageContext() ?? UIImage()
   }
 
   private func drawCenteredText(_ text: String, in rect: CGRect, attrs: [NSAttributedString.Key: Any]) {
     let str = NSAttributedString(string: text, attributes: attrs)
-    let size = str.size()
-    let x = rect.minX + (rect.width - size.width) / 2
-    let y = rect.minY + (rect.height - size.height) / 2
+    let strSize = str.size()
+    let x = rect.minX + (rect.width - strSize.width) / 2
+    let y = rect.minY + (rect.height - strSize.height) / 2
     str.draw(at: CGPoint(x: x, y: y))
   }
 
@@ -159,10 +142,10 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     ctx.setFillColor(UIColor(red: 1.0, green: 0.506, blue: 0.275, alpha: 1.0).cgColor)
     for (i, v) in values.enumerated() {
       let barHeight = frame.height * CGFloat(v / maxVal)
+      if barHeight < 1 { continue }
       let x = frame.minX + CGFloat(i) * spacing + (spacing - barWidth) / 2
       let y = frame.maxY - barHeight
-      let barRect = CGRect(x: x, y: y, width: barWidth, height: barHeight)
-      let path = UIBezierPath(roundedRect: barRect, cornerRadius: 2)
+      let path = UIBezierPath(roundedRect: CGRect(x: x, y: y, width: barWidth, height: barHeight), cornerRadius: 2)
       ctx.addPath(path.cgPath)
       ctx.fillPath()
     }
